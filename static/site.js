@@ -7,6 +7,17 @@ toggle?.addEventListener('click', () => {
   document.body.style.overflow = open ? 'hidden' : '';
 });
 
+// Fade the page out when following a link to another page of the site (as on Adobe).
+document.addEventListener('click', (e) => {
+  const link = e.target.closest('a[href]');
+  if (!link || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  if (link.target || link.hasAttribute('download') || link.origin !== location.origin) return;
+  if (link.pathname === location.pathname) return;  // same page, or a #hash link
+  document.body.classList.add('page-leaving');
+});
+// Coming back with the browser's Back button can restore the faded-out page; show it again.
+window.addEventListener('pageshow', (e) => { if (e.persisted) document.body.classList.remove('page-leaving'); });
+
 // Back-to-top button
 document.querySelector('.back-to-top').addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
@@ -21,14 +32,23 @@ if (document.body.hasAttribute('data-no-download')) {
 // (when stretched to the full width) closer to the target height. Photos are never
 // cropped. The target is given in pixels for Adobe's 704px-wide column (site.json
 // "row_height") and scales with the actual width.
+// Target row height for each screen size, fitted to what Adobe Portfolio does.
+function targetRowHeight(gallery, W) {
+  const rowHeight = Number(gallery.dataset.rowHeight) || 137;  // per album, see site.json
+  const vw = window.innerWidth;
+  if (vw <= 540) return 114;                                // phones
+  if (vw <= 768) return W * 0.278;                          // tablets, upright
+  if (vw <= 932) return W * 0.196 * (rowHeight / 137);      // tablets, sideways
+  return rowHeight * W / 704;                               // computers
+}
+
 function layoutGallery(gallery) {
   const items = [...gallery.children];
-  const W = gallery.clientWidth;
+  // Exact (fractional) width, trimmed a hair so rounding can never push a photo onto the next row.
+  const W = gallery.getBoundingClientRect().width - 0.1;
   const gap = parseFloat(getComputedStyle(gallery).columnGap) || 0;
   const ratios = items.map((a) => a.dataset.pswpWidth / a.dataset.pswpHeight);
-  const rowHeight = Number(gallery.dataset.rowHeight) || 137;
-  // Scale with the column width, but not below 120px (what Adobe uses on phones).
-  const target = Math.max(rowHeight * W / 704, 120);
+  const target = targetRowHeight(gallery, W);
   const heightOf = (row) => (W - gap * (row.length - 1)) / row.reduce((sum, x) => sum + ratios[x], 0);
 
   const rows = [];
@@ -40,9 +60,15 @@ function layoutGallery(gallery) {
     }
     row.push(x);
   });
-  // Don't leave a single photo alone on the last row; fold it into the row before.
-  if (row.length === 1 && rows.length) rows[rows.length - 1].push(...row);
-  else rows.push(row);
+  rows.push(row);
+  // Don't leave a single photo alone on the last row: re-split the last two rows as evenly as possible.
+  if (rows.length > 1 && row.length === 1) {
+    const both = [...rows[rows.length - 2], ...row];
+    let best = 1;
+    const miss = (k) => Math.abs(heightOf(both.slice(0, k)) - target) + Math.abs(heightOf(both.slice(k)) - target);
+    for (let k = 2; k < both.length; k++) if (miss(k) < miss(best)) best = k;
+    rows.splice(-2, 2, both.slice(0, best), both.slice(best));
+  }
 
   gallery.classList.add('justified');
   rows.forEach((r, i) => {
@@ -60,9 +86,10 @@ function layoutGallery(gallery) {
 
 for (const gallery of document.querySelectorAll('.gallery')) {
   layoutGallery(gallery);
-  let lastWidth = gallery.clientWidth;
+  let lastWidth = gallery.getBoundingClientRect().width;
   new ResizeObserver(() => {
-    if (gallery.clientWidth !== lastWidth) { lastWidth = gallery.clientWidth; layoutGallery(gallery); }
+    const width = gallery.getBoundingClientRect().width;
+    if (width !== lastWidth) { lastWidth = width; layoutGallery(gallery); }
   }).observe(gallery);
 }
 

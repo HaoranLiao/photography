@@ -6,16 +6,14 @@
   --accent: #012b55;         /* "You may also like", phone menu button */
   --border: #dde1e7;
   --bg: #fff;
-  --sidebar-width: 236px;
-  --gutter: 40px;
   --gap: 8px;                /* space between album photos */
-  --cover-gap: 1px 2px;      /* space between album covers (rows, columns) */
 }
 
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0;
+  animation: page-in .25s ease-in both;
   background: var(--bg);
   color: var(--text);
   font-family: var(--font);
@@ -23,18 +21,29 @@ body {
   line-height: 1.4;
 }
 a { color: inherit; text-decoration: none; }
+
+/* Page transitions, as on Adobe: fade in on load, fade out when following a link. */
+@keyframes page-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes page-out { from { opacity: 1; } to { opacity: 0; } }
+body.page-leaving { animation: page-out .25s ease-out both; }
+@media (prefers-reduced-motion: reduce) { body, body.page-leaving { animation: none; } }
 img { display: block; max-width: 100%; height: auto; }
 
 .site {
+  /* Same proportions as Adobe: 92% of the window (4% margin each side), at most 1656px;
+     sidebar gets 25% of that, photos 75%. */
   display: flex;
   align-items: flex-start;
+  width: 92%;
+  max-width: 1656px;
   min-height: 100vh;
-  padding: 0 var(--gutter);
+  margin: 0 auto;
 }
 
 /* ---------- sidebar ---------- */
 .sidebar {
-  flex: 0 0 var(--sidebar-width);
+  flex: 0 0 25%;
+  min-width: 0;
   padding: 48px 24px 40px 0;
 }
 .logo { display: block; font-size: 26px; font-weight: 500; line-height: 34px; margin-bottom: 37px; }
@@ -53,9 +62,9 @@ img { display: block; max-width: 100%; height: auto; }
 .social a:hover { opacity: .5; }
 
 /* ---------- main ---------- */
-main { flex: 1; min-width: 0; max-width: 1200px; }
+main { flex: 0 0 75%; min-width: 0; }
 
-.covers { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--cover-gap); margin: 0 -1px; }
+.covers { display: grid; grid-template-columns: repeat(2, 1fr); gap: .35vw .5%; }
 .cover { position: relative; display: block; overflow: hidden; background: #f3f3f3; }
 .cover img { width: 100%; aspect-ratio: 1200 / 676; object-fit: cover; transition: opacity .3s; }
 .cover-hover { position: absolute; inset: 0; opacity: 0; transition: opacity .4s; }
@@ -113,25 +122,22 @@ footer { min-height: 172px; }
 .pswp--idle .pswp__button { opacity: 0; }
 
 /* ---------- smaller screens ---------- */
-@media (max-width: 1000px) {
-  :root { --sidebar-width: 190px; --gutter: 28px; }
-  .gallery { grid-template-columns: repeat(2, 1fr); }
-}
-
-/* Phones: header bar with a menu button, photos edge to edge, menu as a full-screen overlay (as on Adobe). */
-@media (max-width: 720px) {
-  .site { display: block; padding: 0; }
+/* Tablets and phones (up to 932px, Adobe's breakpoint): header bar with a menu button,
+   photos edge to edge, menu as a full-screen overlay. */
+@media (max-width: 932px) {
+  .site { display: block; width: auto; }
+  .sidebar, main { flex: none; }
   .sidebar {
     display: flex; align-items: center; justify-content: space-between;
-    height: 82px; padding: 0 19px;
+    height: 110px; padding: 0 5%;
   }
-  .logo { position: relative; z-index: 21; font-size: 22px; line-height: 1.2; margin: 0; }
+  .logo { position: relative; z-index: 21; font-size: 26px; line-height: 1.2; margin: 0; }
   .menu-toggle {
     position: relative; z-index: 21;
     display: flex; flex-direction: column; justify-content: space-between;
     width: 24px; height: 14px; padding: 0; border: 0; background: none; cursor: pointer;
   }
-  .menu-toggle::before { content: ""; position: absolute; inset: -30px -19px; } /* bigger tap area */
+  .menu-toggle::before { content: ""; position: absolute; inset: -30px -14px; } /* bigger tap area */
   .menu-toggle span { display: block; height: 2px; background: var(--accent); transition: transform .25s, opacity .25s; }
   .menu-toggle[aria-expanded="true"] span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
   .menu-toggle[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
@@ -146,12 +152,23 @@ footer { min-height: 172px; }
   .sidebar ul { margin: 33px 0; text-align: center; }
   .sidebar li a { margin-bottom: 33px; }
   .sidebar li:last-child a { margin-bottom: 0; }
-  .covers { grid-template-columns: 1fr; gap: 0; margin: 0; }
-  .cover img { aspect-ratio: 375 / 218.5; }
-  .more { margin-top: 52px; }
-  .more h3 { padding: 0 19px; margin-bottom: 18px; font-size: 15px; line-height: 15px; }
-  .more .cover:nth-child(n + 2) { display: none; }  /* Adobe shows one related album on phones */
-  footer { min-height: 92px; }
-  .empty { padding: 60px 19px; }
+  .main-covers { margin-top: 0; }
+  .covers { gap: 0 4px; }
+  .cover img { aspect-ratio: 382 / 223; }
+  .more { margin-top: 51px; }
+  .more h3 { padding: 0 5%; margin-bottom: 20px; font-size: 18px; line-height: 18px; }
+  footer { min-height: 102px; }
+  .empty { padding: 60px 5%; }
   .back-to-top { display: none; }
+}
+
+/* Phones (up to 540px): smaller header, one column of covers, one related album. */
+@media (max-width: 540px) {
+  .sidebar { height: 82px; }
+  .logo { font-size: 22px; }
+  .covers { grid-template-columns: 1fr; gap: 0; }
+  .cover img { aspect-ratio: 375 / 218.5; }
+  .more h3 { margin-bottom: 18px; font-size: 15px; line-height: 15px; }
+  .more .cover:nth-child(n + 2) { display: none; }
+  footer { min-height: 92px; }
 }
