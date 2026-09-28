@@ -1,6 +1,8 @@
 /* Layout and look modelled on the old Adobe Portfolio site (lhr.myportfolio.com). */
 :root {
-  --font: "Alegreya Sans", "Helvetica Neue", Arial, sans-serif;
+  /* Rosario: the closest free match to Adobe's Freight Neo Pro. Weight 350 for text,
+     SemiBold (600) for the name and headings, like Freight Neo Book / Semibold. */
+  --font: "Rosario", "Helvetica Neue", Arial, sans-serif;
   --text: #222;
   --muted: #999;
   --accent: #012b55;         /* "You may also like", phone menu button */
@@ -17,6 +19,8 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font);
+  font-weight: 350;
+  font-size-adjust: 0.48;  /* scale Rosario to Freight Neo's letter size and width */
   font-size: 16px;
   line-height: 1.4;
 }
@@ -46,14 +50,14 @@ img { display: block; max-width: 100%; height: auto; }
   min-width: 0;
   padding: 48px 24px 40px 0;
 }
-.logo { display: block; font-size: 26px; font-weight: 500; line-height: 34px; margin-bottom: 37px; }
+.logo { display: block; font-size: 26px; font-weight: 600; line-height: 34px; margin-bottom: 37px; }
 .sidebar nav { display: flex; flex-direction: column; align-items: flex-start; }
-.nav-heading { font-size: 17px; font-weight: 500; color: var(--muted); line-height: 22px; transition: color .2s; }
+.nav-heading { font-size: 17px; font-weight: 600; color: var(--muted); line-height: 22px; transition: color .2s; }
 .nav-heading.active, .nav-heading:hover { color: var(--text); }
 .sidebar ul { list-style: none; margin: 13px 0 14px; padding: 0; }
 .sidebar li a { display: block; color: var(--muted); line-height: 21px; margin-bottom: 8px; transition: color .2s; }
 .sidebar li a:hover { color: var(--text); }
-.sidebar li a.active { color: var(--text); font-weight: 500; }
+.sidebar li a.active { color: var(--text); font-weight: 600; }
 .sidebar .social { margin-top: 30px; }
 .menu-toggle { display: none; }
 
@@ -73,7 +77,7 @@ main { flex: 0 0 75%; min-width: 0; }
 .cover-title {
   position: absolute; inset: 8.6% 0; display: flex; align-items: center; justify-content: center;
   padding: 0 18px; text-align: center; background: rgba(255, 255, 255, .9);
-  color: var(--text); font-size: 26px; font-weight: 500; line-height: 33px;
+  color: var(--text); font-size: 26px; font-weight: 600; line-height: 33px;
   opacity: 0; transition: opacity .15s; pointer-events: none;
 }
 @media (hover: hover) {

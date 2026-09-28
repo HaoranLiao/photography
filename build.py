@@ -136,7 +136,7 @@ def page(site, *, title, prefix, active, body, lightbox=False):
 <title>{esc(full_title)}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rosario:wght@300..700&display=swap">
 {pswp_css}
 <link rel="stylesheet" href="{prefix}assets/style.css">
 </head>
