@@ -116,7 +116,7 @@ def social_links(site, prefix):
             f'<a href="{esc(s["url"])}" target="_blank" rel="noopener" aria-label="{esc(s["type"])}">'
             f'<img src="{prefix}assets/icons/{esc(s["type"])}.svg" alt="" width="12" height="12"></a>'
         )
-    return f'<div class="social">{"".join(items)}</div>'
+    return f'<div class="social">{"".join(items)}</div>' if items else ""
 
 
 def page(site, *, title, prefix, active, body, lightbox=False):
