@@ -1,0 +1,17 @@
+{
+  "name": "Haoran Liao",
+  "email": "haoranliao2@gmail.com",
+  "formspree": "",
+  "disable_right_click": true,
+  "social": [
+    { "type": "facebook", "url": "https://www.facebook.com/haoranliao.gz.cn/" },
+    { "type": "instagram", "url": "https://www.instagram.com/haoran_liao/" },
+    { "type": "500px", "url": "https://500px.com/p/haoranliao?view=photos" }
+  ],
+  "albums": [
+    { "slug": "landscape", "title": "Landscape", "cover": "" },
+    { "slug": "night", "title": "Night", "cover": "" },
+    { "slug": "life", "title": "Life", "cover": "" },
+    { "slug": "travel", "title": "Travel", "cover": "" }
+  ]
+}
