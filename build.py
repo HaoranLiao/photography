@@ -171,7 +171,7 @@ def cover_grid(albums, prefix, cls):
         f'<img src="{prefix}img/{a["slug"]}/cover.jpg" alt="{esc(a["title"])}" width="{COVER_SIZE[0]}" height="{COVER_SIZE[1]}" loading="lazy">'
         + (f'<img class="cover-hover" src="{prefix}img/{a["slug"]}/cover-hover.jpg" alt="" width="{COVER_SIZE[0]}" height="{COVER_SIZE[1]}" loading="lazy">'
            if a.get("_hover") else "")
-        + '</a>'
+        + f'<span class="cover-title">{esc(a["title"])}</span></a>'
         for a in albums
     )
     return f'<div class="{cls}">{tiles}</div>'

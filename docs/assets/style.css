@@ -60,6 +60,17 @@ main { flex: 1; min-width: 0; max-width: 1200px; }
 .cover img { width: 100%; aspect-ratio: 1200 / 676; object-fit: cover; transition: opacity .3s; }
 .cover-hover { position: absolute; inset: 0; opacity: 0; transition: opacity .4s; }
 .cover:hover .cover-hover, .cover:focus-visible .cover-hover { opacity: 1; }
+/* Album name on a white band over the cover while the mouse is over it (as on Adobe). */
+.cover-title {
+  position: absolute; inset: 8.6% 0; display: flex; align-items: center; justify-content: center;
+  padding: 0 18px; text-align: center; background: rgba(255, 255, 255, .9);
+  color: var(--text); font-size: 26px; font-weight: 500; line-height: 33px;
+  opacity: 0; transition: opacity .15s; pointer-events: none;
+}
+@media (hover: hover) {
+  .cover:hover .cover-title { opacity: 1; }
+}
+.cover:focus-visible .cover-title { opacity: 1; }
 
 .gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--gap); }
 .gallery a { display: block; overflow: hidden; background: #f3f3f3; cursor: zoom-in; }
