@@ -8,22 +8,26 @@
     {
       "slug": "landscape",
       "title": "Landscape",
-      "cover": ""
+      "cover": "",
+      "row_height": 137
     },
     {
       "slug": "night",
       "title": "Night",
-      "cover": ""
+      "cover": "",
+      "row_height": 250
     },
     {
       "slug": "life",
       "title": "Life",
-      "cover": ""
+      "cover": "",
+      "row_height": 137
     },
     {
       "slug": "travel",
       "title": "Travel",
-      "cover": ""
+      "cover": "",
+      "row_height": 137
     }
   ]
 }

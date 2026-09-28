@@ -125,7 +125,7 @@ def page(site, *, title, prefix, active, body, lightbox=False):
         f'<li><a href="{prefix}{a["slug"]}/"{ACTIVE if active == a["slug"] else ""}>{esc(a["title"])}</a></li>'
         for a in albums
     )
-    work_active = active != "contact"
+    work_active = active != "work"  # grey on the home page only, as on Adobe
     full_title = site["name"] if title is None else f'{site["name"]} - {title}'
     pswp_css = f'<link rel="stylesheet" href="{PHOTOSWIPE}/photoswipe.css">' if lightbox else ""
     return f"""<!doctype html>
@@ -158,7 +158,7 @@ def page(site, *, title, prefix, active, body, lightbox=False):
   </main>
 </div>
 <button class="back-to-top" aria-label="Back to top">
-  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20V4M5 11l7-7 7 7"/></svg>
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20V4M5 11l7-7 7 7"/></svg>
 </button>
 <script type="module" src="{prefix}assets/site.js"></script>
 </body>
@@ -193,17 +193,23 @@ def build_pages(site, out, photos_by_album):
         empty = '<p class="empty">No photos yet. Add some to <code>originals/&lt;album&gt;/</code> and run <code>python3 build.py</code>.</p>'
     (out / "index.html").write_text(page(
         site, title=None, prefix="", active="work",
-        body=cover_grid(albums, "", "covers") if albums else empty))
+        body=cover_grid(albums, "", "covers main-covers") if albums else empty))
 
     for a in site["albums"]:
         photos = photos_by_album[a["slug"]]
         d = out / a["slug"]
         d.mkdir(parents=True, exist_ok=True)
         tiles = "".join(gallery_tile(a["slug"], p) for p in photos)
-        gallery = f'<div class="gallery">{tiles}</div>' if photos else \
+        gallery = f'<div class="gallery" data-row-height="{a.get("row_height", 137)}">{tiles}</div>' if photos else \
             f'<p class="empty">No photos yet. Add some to <code>originals/{a["slug"]}/</code> and run <code>python3 build.py</code>.</p>'
+        # "You may also like": the next two albums in menu order, wrapping around.
         others = [o for o in albums if o["slug"] != a["slug"]]
-        more = (f'<section class="more"><h3>You may also like</h3>{cover_grid(others, "../", "covers covers-more")}</section>'
+        if a in albums:
+            i = albums.index(a)
+            others = (albums[i + 1:] + albums[:i])[:2]
+        else:
+            others = others[:2]
+        more = (f'<section class="more"><h3>You may also like</h3>{cover_grid(others, "../", "covers")}</section>'
                 if others else "")
         (d / "index.html").write_text(page(
             site, title=a["title"], prefix="../", active=a["slug"], body=gallery + more, lightbox=True))

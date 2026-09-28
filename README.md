@@ -24,7 +24,7 @@ docs/              the published site (commit this)
 
 - **Order:** photos are sorted by filename. Rename them with a number in front (`01-...`, `02-...`) to reorder.
 - **Album cover:** by default it's the first photo. To choose another, set `"cover": "filename.jpg"` for that album in `site.json`. You can also use an image that isn't in the album: save it as `originals/_covers/<album>.jpg`. Add `originals/_covers/<album>-hover.jpg` to show a second image on mouse-over, as the Travel cover does.
-- **Layout:** album photos are never cropped. They're arranged in rows of equal height, as on Adobe Portfolio.
+- **Layout:** album photos are never cropped. They're arranged in rows of equal height, as on Adobe Portfolio. Each album's `row_height` in `site.json` sets the target row height (137 by default; Night uses 250, which gives it 2 photos per row). Larger numbers mean bigger photos and fewer per row.
 - **New album:** add an entry to `albums` in `site.json` and create a matching folder in `originals/`.
 - **Privacy:** camera metadata, including GPS location, is removed from the published images.
 

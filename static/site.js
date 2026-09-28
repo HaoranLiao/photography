@@ -4,14 +4,11 @@ const toggle = document.querySelector('.menu-toggle');
 toggle?.addEventListener('click', () => {
   const open = sidebar.classList.toggle('open');
   toggle.setAttribute('aria-expanded', open);
+  document.body.style.overflow = open ? 'hidden' : '';
 });
 
 // Back-to-top button
-const backToTop = document.querySelector('.back-to-top');
-const onScroll = () => backToTop.classList.toggle('visible', window.scrollY > 300);
-window.addEventListener('scroll', onScroll, { passive: true });
-onScroll();
-backToTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+document.querySelector('.back-to-top').addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
 // Discourage right-click saving (as on the old site). Determined visitors can still save images.
 if (document.body.hasAttribute('data-no-download')) {
@@ -19,53 +16,46 @@ if (document.body.hasAttribute('data-no-download')) {
   document.addEventListener('dragstart', (e) => { if (e.target.tagName === 'IMG') e.preventDefault(); });
 }
 
-// Justified gallery: split photos into rows (as many as a simple left-to-right fill
-// would need), balance them so every row is close to the target height, then scale
-// each row to exactly fill the width. Photos are never cropped.
+// Justified gallery, same method as Adobe Portfolio's photo grid: walk through the
+// photos and keep adding to the current row while that brings the row's height
+// (when stretched to the full width) closer to the target height. Photos are never
+// cropped. The target is given in pixels for Adobe's 704px-wide column (site.json
+// "row_height") and scales with the actual width.
 function layoutGallery(gallery) {
   const items = [...gallery.children];
   const W = gallery.clientWidth;
   const gap = parseFloat(getComputedStyle(gallery).columnGap) || 0;
   const ratios = items.map((a) => a.dataset.pswpWidth / a.dataset.pswpHeight);
-  const target = Math.max(W * 0.185, 100);
-  const maxHeight = Math.min(W * 0.8, window.innerHeight * 0.85);
+  const rowHeight = Number(gallery.dataset.rowHeight) || 137;
+  // Scale with the column width, but not below 120px (what Adobe uses on phones).
+  const target = Math.max(rowHeight * W / 704, 120);
+  const heightOf = (row) => (W - gap * (row.length - 1)) / row.reduce((sum, x) => sum + ratios[x], 0);
 
-  let rowCount = 1;
-  for (let i = 0, w = 0; i < ratios.length; i++) {
-    const iw = ratios[i] * target;
-    if (w > 0 && w + gap + iw > W) { rowCount++; w = iw; } else { w += (w ? gap : 0) + iw; }
-  }
-  rowCount = Math.min(rowCount, ratios.length);
-
-  // cost[i][j]: squared miss of a row made of photos i..j-1; dp over exactly rowCount rows.
-  const n = ratios.length;
-  const prefix = [0];
-  ratios.forEach((r, i) => prefix.push(prefix[i] + r));
-  const rowCost = (i, j) => ((prefix[j] - prefix[i]) * target + gap * (j - i - 1) - W) ** 2;
-  const best = Array.from({ length: rowCount + 1 }, () => new Array(n + 1).fill(Infinity));
-  const cut = Array.from({ length: rowCount + 1 }, () => new Array(n + 1).fill(0));
-  best[0][0] = 0;
-  for (let k = 1; k <= rowCount; k++) {
-    for (let j = k; j <= n; j++) {
-      for (let i = k - 1; i < j; i++) {
-        const c = best[k - 1][i] + rowCost(i, j);
-        if (c < best[k][j]) { best[k][j] = c; cut[k][j] = i; }
-      }
-    }
-  }
   const rows = [];
-  for (let k = rowCount, j = n; k > 0; k--) { const i = cut[k][j]; rows.unshift([i, j]); j = i; }
+  let row = [];
+  ratios.forEach((_, x) => {
+    if (row.length && Math.abs(heightOf([...row, x]) - target) > Math.abs(heightOf(row) - target)) {
+      rows.push(row);
+      row = [];
+    }
+    row.push(x);
+  });
+  // Don't leave a single photo alone on the last row; fold it into the row before.
+  if (row.length === 1 && rows.length) rows[rows.length - 1].push(...row);
+  else rows.push(row);
 
   gallery.classList.add('justified');
-  for (const [i, j] of rows) {
-    const h = Math.min((W - gap * (j - i - 1)) / (prefix[j] - prefix[i]), maxHeight);
-    for (let x = i; x < j; x++) {
+  rows.forEach((r, i) => {
+    let h = heightOf(r);
+    // A short last row would blow up to a huge height; keep it at the target instead.
+    if (i === rows.length - 1 && rows.length > 1 && h > target * 2) h = target;
+    for (const x of r) {
       const w = Math.floor(ratios[x] * h * 100) / 100;
       items[x].style.width = `${w}px`;
       items[x].style.height = `${h}px`;
       items[x].querySelector('img').sizes = `${Math.ceil(w)}px`;
     }
-  }
+  });
 }
 
 for (const gallery of document.querySelectorAll('.gallery')) {
@@ -84,10 +74,26 @@ if (document.querySelector('.gallery')) {
     gallery: '.gallery',
     children: 'a',
     pswpModule: () => import(`${base}/photoswipe.esm.min.js`),
-    bgOpacity: 1,
+    // Like Adobe Portfolio: near-opaque white backdrop, photo edge to edge, no counter or zoom.
+    bgOpacity: 0.94,
     showHideAnimationType: 'fade',
-    padding: { top: 40, bottom: 40, left: 20, right: 20 },
+    padding: { top: 0, bottom: 0, left: 0, right: 0 },
+    counter: false,
     zoom: false,
+    imageClickAction: 'next',
+    tapAction: 'next',
+  });
+  // Arrows and close button appear while the mouse moves, then fade out.
+  lightbox.on('afterInit', () => {
+    const el = lightbox.pswp.element;
+    let timer;
+    const wake = () => {
+      el.classList.remove('pswp--idle');
+      clearTimeout(timer);
+      timer = setTimeout(() => el.classList.add('pswp--idle'), 2000);
+    };
+    el.classList.add('pswp--idle');
+    el.addEventListener('pointermove', wake);
   });
   lightbox.init();
 }
