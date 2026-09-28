@@ -81,7 +81,7 @@ if (document.querySelector('.gallery')) {
     counter: false,
     zoom: false,
     imageClickAction: 'next',
-    tapAction: 'next',
+    tapAction: 'toggle-controls',  // phones: tap shows/hides the close button; swipe to move, swipe down to close
   });
   // Arrows and close button appear while the mouse moves, then fade out.
   lightbox.on('afterInit', () => {
@@ -92,32 +92,9 @@ if (document.querySelector('.gallery')) {
       clearTimeout(timer);
       timer = setTimeout(() => el.classList.add('pswp--idle'), 2000);
     };
+    if (!matchMedia('(hover: hover)').matches) return;  // touch screens use tap-to-toggle instead
     el.classList.add('pswp--idle');
     el.addEventListener('pointermove', wake);
   });
   lightbox.init();
 }
-
-// Contact form: posts to Formspree if configured in site.json, otherwise opens the visitor's email app.
-const form = document.querySelector('.contact-form');
-form?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const status = form.querySelector('.form-status');
-  const data = new FormData(form);
-  if (form.getAttribute('action')) {
-    status.textContent = 'Sending…';
-    try {
-      const res = await fetch(form.action, { method: 'POST', body: data, headers: { Accept: 'application/json' } });
-      if (!res.ok) throw new Error();
-      form.reset();
-      status.textContent = 'Thanks! Your message has been sent.';
-    } catch {
-      status.textContent = 'Sorry, something went wrong. Please try again later.';
-    }
-    return;
-  }
-  const subject = `Message from ${data.get('name')}`;
-  const body = `${data.get('message')}\n\n${data.get('name')} <${data.get('email')}>`;
-  window.location.href = `mailto:${form.dataset.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  status.textContent = 'Opening your email app…';
-});

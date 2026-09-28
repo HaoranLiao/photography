@@ -5,7 +5,7 @@ Haoran Liao's photo albums, a static site served by GitHub Pages. It replaces th
 ## How it works
 
 ```
-site.json          name, email, social links, album list (order = menu order)
+site.json          name, social links, album list (order = menu order)
 originals/<album>/ your full-size photos (kept on your Mac only, not committed)
 static/            stylesheet, script and icons
 build.py           resizes photos and writes the site into docs/
@@ -27,10 +27,6 @@ docs/              the published site (commit this)
 - **Layout:** album photos are never cropped. They're arranged in rows of equal height, as on Adobe Portfolio. Each album's `row_height` in `site.json` sets the target row height (137 by default; Night uses 250, which gives it 2 photos per row). Larger numbers mean bigger photos and fewer per row.
 - **New album:** add an entry to `albums` in `site.json` and create a matching folder in `originals/`.
 - **Privacy:** camera metadata, including GPS location, is removed from the published images.
-
-## Contact form
-
-With no setup, the form opens the visitor's email app with the message already filled in. To have messages delivered to you directly instead, create a free form at [formspree.io](https://formspree.io), then put its form ID (e.g. `xyzabcd`) in `"formspree"` in `site.json` and rebuild.
 
 ## Publishing (one-time)
 

@@ -3,8 +3,7 @@
   --font: "Alegreya Sans", "Helvetica Neue", Arial, sans-serif;
   --text: #222;
   --muted: #999;
-  --accent: #012b55;         /* "You may also like", contact labels */
-  --button: #5f7991;
+  --accent: #012b55;         /* "You may also like", phone menu button */
   --border: #dde1e7;
   --bg: #fff;
   --sidebar-width: 236px;
@@ -80,25 +79,6 @@ footer { min-height: 172px; }
 .empty { color: var(--muted); padding: 60px 0; }
 .empty code { background: #f4f4f4; padding: 1px 5px; border-radius: 3px; font-size: 14px; }
 
-/* ---------- contact ---------- */
-.contact { max-width: 600px; margin: 0 auto; padding-top: 100px; }
-.contact h1 { text-align: center; font-size: 30px; font-weight: 500; line-height: 47px; margin: 0 0 105px; }
-.contact-form label { display: block; color: var(--accent); font-size: 16px; font-weight: 500; line-height: 16px; margin-bottom: 30px; }
-.contact-form input, .contact-form textarea {
-  display: block; width: 100%; height: 42px; margin-top: 10px; padding: 1px 10px;
-  font: inherit; font-size: 16px; color: var(--accent);
-  border: 1px solid #d7dde3; border-radius: 3px; background: #fff;
-}
-.contact-form textarea { height: 132px; padding: 13px 10px; resize: vertical; }
-.contact-form input:focus, .contact-form textarea:focus { outline: none; border-color: var(--button); }
-.contact-form ::placeholder { color: rgba(1, 43, 85, .4); }
-.contact-form button {
-  height: 40px; padding: 0 30px; font: inherit; font-size: 16px; font-weight: 500; color: #fff;
-  background: var(--button); border: 0; border-radius: 6px; cursor: pointer; transition: opacity .2s;
-}
-.contact-form button:hover { opacity: .85; }
-.form-status { color: var(--muted); font-size: 14px; min-height: 1.4em; }
-
 /* ---------- back to top ---------- */
 .back-to-top {
   position: fixed; right: 40px; bottom: 40px; width: 50px; height: 50px;
@@ -155,11 +135,12 @@ footer { min-height: 172px; }
   .sidebar ul { margin: 33px 0; text-align: center; }
   .sidebar li a { margin-bottom: 33px; }
   .sidebar li:last-child a { margin-bottom: 0; }
-  .covers { grid-template-columns: 1fr; margin: 0; }
-  .more { margin-top: 50px; }
-  .more h3 { padding: 0 19px; }
-  .contact { padding: 16px 19px 0; }
-  .contact h1 { margin-bottom: 40px; }
+  .covers { grid-template-columns: 1fr; gap: 0; margin: 0; }
+  .cover img { aspect-ratio: 375 / 218.5; }
+  .more { margin-top: 52px; }
+  .more h3 { padding: 0 19px; margin-bottom: 18px; font-size: 15px; line-height: 15px; }
+  .more .cover:nth-child(n + 2) { display: none; }  /* Adobe shows one related album on phones */
+  footer { min-height: 92px; }
   .empty { padding: 60px 19px; }
-  .back-to-top { right: 16px; bottom: 16px; }
+  .back-to-top { display: none; }
 }

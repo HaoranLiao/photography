@@ -148,7 +148,6 @@ def page(site, *, title, prefix, active, body, lightbox=False):
     <nav>
       <a class="nav-heading{' active' if work_active else ''}" href="{prefix}">Work</a>
       <ul>{nav_items}</ul>
-      <a class="nav-heading{' active' if active == 'contact' else ''}" href="{prefix}contact/">Contact</a>
       {social_links(site, prefix)}
     </nav>
   </aside>
@@ -213,21 +212,6 @@ def build_pages(site, out, photos_by_album):
                 if others else "")
         (d / "index.html").write_text(page(
             site, title=a["title"], prefix="../", active=a["slug"], body=gallery + more, lightbox=True))
-
-    d = out / "contact"
-    d.mkdir(parents=True, exist_ok=True)
-    action = f' action="https://formspree.io/f/{esc(site["formspree"])}" method="POST"' if site.get("formspree") else ""
-    form = f"""<section class="contact">
-      <h1>Contact</h1>
-      <form class="contact-form"{action} data-email="{esc(site.get("email", ""))}">
-        <label>Name <span>*</span><input name="name" required placeholder="Your Name..."></label>
-        <label>Email Address <span>*</span><input name="email" type="email" required placeholder="Your Email Address..."></label>
-        <label>Message <span>*</span><textarea name="message" rows="6" required placeholder="Your Message..."></textarea></label>
-        <button type="submit">Submit</button>
-        <p class="form-status" role="status"></p>
-      </form>
-    </section>"""
-    (d / "index.html").write_text(page(site, title="Contact", prefix="../", active="contact", body=form))
 
 
 def main():
