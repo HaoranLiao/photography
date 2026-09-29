@@ -118,7 +118,7 @@ def social_links(site, prefix):
     return f'<div class="social">{"".join(items)}</div>' if items else ""
 
 
-def page(site, *, title, prefix, active, body):
+def page(site, *, title, prefix, active, body, path, image):
     albums = site["albums"]
     nav_items = "".join(
         f'<li><a href="{prefix}{a["slug"]}/"{ACTIVE if active == a["slug"] else ""}>{esc(a["title"])}</a></li>'
@@ -132,6 +132,15 @@ def page(site, *, title, prefix, active, body):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(full_title)}</title>
+<meta name="description" content="{esc(site.get("description", ""))}">
+<link rel="icon" type="image/png" sizes="32x32" href="{prefix}assets/favicon-32.png">
+<link rel="apple-touch-icon" href="{prefix}assets/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{esc(full_title)}">
+<meta property="og:description" content="{esc(site.get("description", ""))}">
+<meta property="og:url" content="{esc(site["url"])}/{path}">
+<meta property="og:image" content="{esc(site["url"])}/{image}">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rosario:wght@300..700&display=swap">
@@ -154,7 +163,7 @@ def page(site, *, title, prefix, active, body):
   </main>
 </div>
 <button class="back-to-top" aria-label="Back to top">
-  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20V4M5 11l7-7 7 7"/></svg>
+  <svg viewBox="0 0 26 26" aria-hidden="true"><path d="M13.8,1.3L21.6,9c0.1,0.1,0.1,0.3,0.2,0.4c0.1,0.1,0.1,0.3,0.1,0.4s0,0.3-0.1,0.4c-0.1,0.1-0.1,0.3-0.3,0.4 c-0.1,0.1-0.2,0.2-0.4,0.3c-0.2,0.1-0.3,0.1-0.4,0.1c-0.1,0-0.3,0-0.4-0.1c-0.2-0.1-0.3-0.2-0.4-0.3L14.2,5l0,19.1 c0,0.2-0.1,0.3-0.1,0.5c0,0.1-0.1,0.3-0.3,0.4c-0.1,0.1-0.2,0.2-0.4,0.3c-0.1,0.1-0.3,0.1-0.5,0.1c-0.1,0-0.3,0-0.4-0.1 c-0.1-0.1-0.3-0.1-0.4-0.3c-0.1-0.1-0.2-0.2-0.3-0.4c-0.1-0.1-0.1-0.3-0.1-0.5l0-19.1l-5.7,5.7C6,10.8,5.8,10.9,5.7,11 c-0.1,0.1-0.3,0.1-0.4,0.1c-0.2,0-0.3,0-0.4-0.1c-0.1-0.1-0.3-0.2-0.4-0.3c-0.1-0.1-0.1-0.2-0.2-0.4C4.1,10.2,4,10.1,4.1,9.9 c0-0.1,0-0.3,0.1-0.4c0-0.1,0.1-0.3,0.3-0.4l7.7-7.8c0.1,0,0.2-0.1,0.2-0.1c0,0,0.1-0.1,0.2-0.1c0.1,0,0.2,0,0.2-0.1 c0.1,0,0.1,0,0.2,0c0,0,0.1,0,0.2,0c0.1,0,0.2,0,0.2,0.1c0.1,0,0.1,0.1,0.2,0.1C13.7,1.2,13.8,1.2,13.8,1.3z"/></svg>
 </button>
 <script type="module" src="{prefix}assets/site.js"></script>
 </body>
@@ -188,7 +197,8 @@ def build_pages(site, out, photos_by_album):
     if not albums:
         empty = '<p class="empty">No photos yet. Add some to <code>originals/&lt;album&gt;/</code> and run <code>python3 build.py</code>.</p>'
     (out / "index.html").write_text(page(
-        site, title=None, prefix="", active="work",
+        site, title=None, prefix="", active="work", path="",
+        image=f'img/{albums[0]["slug"]}/cover.jpg' if albums else "assets/apple-touch-icon.png",
         body=cover_grid(albums, "", "covers main-covers") if albums else empty))
 
     for a in site["albums"]:
@@ -208,7 +218,8 @@ def build_pages(site, out, photos_by_album):
         more = (f'<section class="more"><h3>You may also like</h3>{cover_grid(others, "../", "covers")}</section>'
                 if others else "")
         (d / "index.html").write_text(page(
-            site, title=a["title"], prefix="../", active=a["slug"], body=gallery + more))
+            site, title=a["title"], prefix="../", active=a["slug"], path=f'{a["slug"]}/',
+            image=f'img/{a["slug"]}/cover.jpg' if photos else "assets/apple-touch-icon.png", body=gallery + more))
 
 
 def main():

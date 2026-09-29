@@ -70,8 +70,8 @@ main { flex: 0 0 75%; min-width: 0; }
 
 .covers { display: grid; grid-template-columns: repeat(2, 1fr); gap: .35vw .5%; }
 .cover { position: relative; display: block; overflow: hidden; background: #f3f3f3; }
-.cover img { width: 100%; aspect-ratio: 1200 / 676; object-fit: cover; transition: opacity .3s; }
-.cover-hover { position: absolute; inset: 0; opacity: 0; transition: opacity .4s; }
+.cover img { width: 100%; aspect-ratio: 1200 / 676; object-fit: cover; }
+.cover-hover { position: absolute; inset: 0; opacity: 0; }  /* swaps instantly, as on Adobe */
 .cover:hover .cover-hover, .cover:focus-visible .cover-hover { opacity: 1; }
 /* Album name on a white band over the cover while the mouse is over it (as on Adobe). */
 .cover-title {
@@ -114,18 +114,17 @@ footer { min-height: 172px; }
 .back-to-top {
   position: fixed; right: 40px; bottom: 40px; width: 50px; height: 50px;
   display: flex; align-items: center; justify-content: center;
-  border: 0; border-radius: 5px; background: rgba(0, 0, 0, .05); color: var(--muted); cursor: pointer;
-  transition: color .2s;
+  border: 0; border-radius: 5px; background: rgba(0, 0, 0, .05); cursor: pointer;
 }
-.back-to-top:hover { color: var(--text); }
+.back-to-top svg { width: 20px; height: 20px; fill: var(--muted); }
 
 /* ---------- full-screen viewer (as on Adobe Portfolio) ---------- */
 html.lb-lock, html.lb-lock body { overflow: hidden; }
 .lb {
   position: fixed; inset: 0; z-index: 1000; background: rgba(255, 255, 255, .94);
-  opacity: 0; visibility: hidden; transition: opacity .25s, visibility .25s;
+  visibility: hidden;  /* opens and closes instantly; only the photo fades in (as on Adobe) */
 }
-.lb.lb-open { opacity: 1; visibility: visible; }
+.lb.lb-open { visibility: visible; }
 .lb-stage { position: absolute; inset: 0; }
 .lb-img {
   position: absolute; inset: 0; margin: auto;
@@ -173,7 +172,7 @@ html.lb-lock, html.lb-lock body { overflow: hidden; }
     display: flex; align-items: center; justify-content: space-between;
     height: 110px; padding: 0 5%;
   }
-  .logo { position: relative; z-index: 21; font-size: 26px; line-height: 1.2; margin: 0; }
+  .logo { font-size: 26px; line-height: 1.2; margin: 0; }  /* hidden under the open menu, as on Adobe */
   .menu-toggle {
     position: relative; z-index: 21;
     display: flex; flex-direction: column; justify-content: space-between;
@@ -187,9 +186,9 @@ html.lb-lock, html.lb-lock body { overflow: hidden; }
   .sidebar nav {
     position: fixed; inset: 0; z-index: 20; background: var(--bg);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    opacity: 0; visibility: hidden; transition: opacity .25s, visibility .25s;
+    opacity: 0; visibility: hidden; transition: opacity .2s, visibility 0s .2s;
   }
-  .sidebar.open nav { opacity: 1; visibility: visible; }
+  .sidebar.open nav { opacity: 1; visibility: visible; transition: opacity .2s; }
   .nav-heading, .sidebar li a { font-size: 22px; line-height: 29px; }
   .sidebar ul { margin: 33px 0; text-align: center; }
   .sidebar li a { margin-bottom: 33px; }

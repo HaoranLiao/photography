@@ -104,7 +104,7 @@ const arrow = (d) => `<svg width="60" height="60" viewBox="0 0 60 60" aria-hidde
 function setupViewer(gallery) {
   const links = [...gallery.querySelectorAll('a')];
   const box = document.createElement('div');
-  box.className = 'lb';
+  box.className = matchMedia('(hover: hover)').matches ? 'lb lb-idle' : 'lb';
   box.setAttribute('role', 'dialog');
   box.setAttribute('aria-modal', 'true');
   box.setAttribute('aria-label', 'Photo viewer');
@@ -137,11 +137,10 @@ function setupViewer(gallery) {
     // Crossfade: once the new photo is ready, fade it in while the previous one fades out.
     const reveal = () => {
       if (current !== img) { img.remove(); return; }  // already moved on to another photo
-      requestAnimationFrame(() => {
-        img.classList.add('lb-visible');
-        previous?.classList.remove('lb-visible');
-        if (previous) setTimeout(() => previous.remove(), 450);
-      });
+      void img.offsetWidth;  // make the browser register opacity 0 first, so the fade runs
+      img.classList.add('lb-visible');
+      previous?.classList.remove('lb-visible');
+      if (previous) setTimeout(() => previous.remove(), 450);
     };
     if (img.complete) {
       reveal();
@@ -153,11 +152,13 @@ function setupViewer(gallery) {
     preload(i - 1);
   }
 
-  // Controls fade out after 2s without mouse movement (touch screens keep the close button).
+  // As on Adobe: controls are hidden until the mouse moves, and fade out 5s after it stops.
+  // (Touch screens have no mouse, so there the close button stays visible.)
+  const hasMouse = () => matchMedia('(hover: hover)').matches;
   const wake = () => {
     box.classList.remove('lb-idle');
     clearTimeout(idleTimer);
-    if (matchMedia('(hover: hover)').matches) idleTimer = setTimeout(() => box.classList.add('lb-idle'), 2000);
+    if (hasMouse()) idleTimer = setTimeout(() => box.classList.add('lb-idle'), 5000);
   };
 
   function open(i) {
@@ -168,7 +169,6 @@ function setupViewer(gallery) {
     show(i);
     document.documentElement.classList.add('lb-lock');
     box.classList.add('lb-open');
-    wake();
     box.querySelector('.lb-close').focus({ preventScroll: true });
   }
 
@@ -176,9 +176,18 @@ function setupViewer(gallery) {
     box.classList.remove('lb-open');
     document.documentElement.classList.remove('lb-lock');
     clearTimeout(idleTimer);
-    setTimeout(() => { if (!box.classList.contains('lb-open')) stage.replaceChildren(); }, 300);
+    box.classList.toggle('lb-idle', hasMouse());  // hidden again (without a fade) for the next opening
+    stage.replaceChildren();
     returnFocus?.focus({ preventScroll: true });
   }
+
+  // Start loading a photo's full-size version as soon as the mouse is over its thumbnail,
+  // so it's usually ready by the time it's clicked.
+  const warmed = new Set();
+  gallery.addEventListener('pointerover', (e) => {
+    const link = e.target.closest('a');
+    if (link && !warmed.has(link)) { warmed.add(link); new Image().src = link.href; }
+  });
 
   gallery.addEventListener('click', (e) => {
     const link = e.target.closest('a');
@@ -197,7 +206,6 @@ function setupViewer(gallery) {
     else if (e.key === 'Escape') close();
     else return;
     e.preventDefault();
-    wake();
   });
 
   // Swipe on touch screens.
