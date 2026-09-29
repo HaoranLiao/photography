@@ -11,12 +11,13 @@ re-processed, and photos you delete from originals/ are removed from docs/.
 
 import argparse
 import html
+import io
 import json
 import re
 import shutil
 from pathlib import Path
 
-from PIL import Image, ImageOps
+from PIL import Image, ImageCms, ImageOps
 
 ROOT = Path(__file__).resolve().parent
 PHOTO_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".tif", ".tiff"}
@@ -39,6 +40,20 @@ def find_album_dir(src, album):
     return None
 
 
+SRGB = ImageCms.createProfile("sRGB")
+
+
+def open_rgb(path):
+    """Open a photo upright and in sRGB. Lightroom exports Display P3, which would look washed out once the profile is dropped."""
+    with Image.open(path) as src:
+        icc = src.info.get("icc_profile")
+        im = ImageOps.exif_transpose(src)
+    if icc:
+        im = ImageCms.profileToProfile(im, ImageCms.ImageCmsProfile(io.BytesIO(icc)), SRGB,
+                                       renderingIntent=ImageCms.Intent.PERCEPTUAL, outputMode="RGB")
+    return im.convert("RGB")
+
+
 def save_jpeg(img, path):
     path.parent.mkdir(parents=True, exist_ok=True)
     # Saving without exif= drops camera metadata (including GPS location).
@@ -52,22 +67,19 @@ def process_photo(src_path, out_dir, stem):
     if full.exists() and thumb.exists() and full.stat().st_mtime >= src_path.stat().st_mtime:
         with Image.open(full) as im:
             return im.size
-    with Image.open(src_path) as im:
-        im = ImageOps.exif_transpose(im).convert("RGB")
-        big = im.copy()
-        big.thumbnail((FULL_LONG_EDGE, FULL_LONG_EDGE), Image.LANCZOS)
-        save_jpeg(big, full)
-        small = im.copy()
-        small.thumbnail((THUMB_LONG_EDGE, THUMB_LONG_EDGE), Image.LANCZOS)
-        save_jpeg(small, thumb)
-        print(f"  + {src_path.relative_to(src_path.parents[1])}")
-        return big.size
+    im = open_rgb(src_path)
+    big = im.copy()
+    big.thumbnail((FULL_LONG_EDGE, FULL_LONG_EDGE), Image.LANCZOS)
+    save_jpeg(big, full)
+    small = im.copy()
+    small.thumbnail((THUMB_LONG_EDGE, THUMB_LONG_EDGE), Image.LANCZOS)
+    save_jpeg(small, thumb)
+    print(f"  + {src_path.relative_to(src_path.parents[1])}")
+    return big.size
 
 
 def make_cover(src_path, out_path):
-    with Image.open(src_path) as im:
-        im = ImageOps.exif_transpose(im).convert("RGB")
-        save_jpeg(ImageOps.fit(im, COVER_SIZE, Image.LANCZOS), out_path)
+    save_jpeg(ImageOps.fit(open_rgb(src_path), COVER_SIZE, Image.LANCZOS), out_path)
 
 
 def build_album(src, out, album):
