@@ -1,3 +1,27 @@
+// Always show the latest version of the site. Browsers may keep pages for a while (GitHub
+// Pages allows 10 minutes), so each page asks the server for the current version, bypassing the
+// browser's saved copy. If this page is older, it's loaded again from an address that can't
+// have been saved (…?v=<version>), at most once per page and version, so it can never loop.
+const pageVersion = document.querySelector('meta[name="site-version"]')?.content;
+if (new URLSearchParams(location.search).has('v')) {
+  history.replaceState(null, '', location.pathname + location.hash);  // tidy the address bar
+}
+async function showLatestVersion() {
+  try {
+    const res = await fetch(new URL('../version.txt', import.meta.url), { cache: 'no-store' });
+    const latest = res.ok ? (await res.text()).trim() : '';
+    if (!pageVersion || !latest || latest === pageVersion) return;
+    const key = `reloaded:${location.pathname}:${latest}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, '1');
+    location.replace(`${location.pathname}?v=${latest}${location.hash}`);
+  } catch {
+    // Offline, or storage blocked: just keep showing this page.
+  }
+}
+showLatestVersion();
+window.addEventListener('pageshow', (e) => { if (e.persisted) showLatestVersion(); });
+
 // Mobile menu
 const sidebar = document.querySelector('.sidebar');
 const toggle = document.querySelector('.menu-toggle');

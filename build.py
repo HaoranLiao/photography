@@ -10,6 +10,7 @@ re-processed, and photos you delete from originals/ are removed from docs/.
 """
 
 import argparse
+import hashlib
 import html
 import io
 import json
@@ -130,6 +131,29 @@ def social_links(site, prefix):
     return f'<div class="social">{"".join(items)}</div>' if items else ""
 
 
+VERSION_PLACEHOLDER = "__SITE_VERSION__"
+
+
+def file_version(name):
+    """Short hash of a file in static/, used in its link so browsers never mix old and new files."""
+    return hashlib.sha1((ROOT / "static" / name).read_bytes()).hexdigest()[:8]
+
+
+def stamp_version(out):
+    """Give every page the site's version, and publish it in version.txt. site.js compares the
+    two and reloads a page the browser kept from an older version of the site."""
+    pages = sorted(out.glob("**/index.html"))
+    h = hashlib.sha1()
+    for f in pages + sorted((out / "assets").glob("*")):
+        if f.is_file():
+            h.update(f.read_bytes())
+    version = h.hexdigest()[:10]
+    for f in pages:
+        f.write_text(f.read_text().replace(VERSION_PLACEHOLDER, version))
+    (out / "version.txt").write_text(version + "\n")
+    return version
+
+
 def page(site, *, title, prefix, active, body, path, image):
     albums = site["albums"]
     nav_items = "".join(
@@ -144,6 +168,7 @@ def page(site, *, title, prefix, active, body, path, image):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(full_title)}</title>
+<meta name="site-version" content="{VERSION_PLACEHOLDER}">
 <meta name="description" content="{esc(site.get("description", ""))}">
 <link rel="icon" type="image/png" sizes="32x32" href="{prefix}assets/favicon-32.png">
 <link rel="apple-touch-icon" href="{prefix}assets/apple-touch-icon.png">
@@ -156,7 +181,7 @@ def page(site, *, title, prefix, active, body, path, image):
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rosario:wght@300..700&display=swap">
-<link rel="stylesheet" href="{prefix}assets/style.css">
+<link rel="stylesheet" href="{prefix}assets/style.css?v={file_version('style.css')}">
 </head>
 <body{' data-no-download' if site.get("disable_right_click") else ''}>
 <div class="site">
@@ -177,7 +202,7 @@ def page(site, *, title, prefix, active, body, path, image):
 <button class="back-to-top" aria-label="Back to top">
   <svg viewBox="0 0 26 26" aria-hidden="true"><path d="M13.8,1.3L21.6,9c0.1,0.1,0.1,0.3,0.2,0.4c0.1,0.1,0.1,0.3,0.1,0.4s0,0.3-0.1,0.4c-0.1,0.1-0.1,0.3-0.3,0.4 c-0.1,0.1-0.2,0.2-0.4,0.3c-0.2,0.1-0.3,0.1-0.4,0.1c-0.1,0-0.3,0-0.4-0.1c-0.2-0.1-0.3-0.2-0.4-0.3L14.2,5l0,19.1 c0,0.2-0.1,0.3-0.1,0.5c0,0.1-0.1,0.3-0.3,0.4c-0.1,0.1-0.2,0.2-0.4,0.3c-0.1,0.1-0.3,0.1-0.5,0.1c-0.1,0-0.3,0-0.4-0.1 c-0.1-0.1-0.3-0.1-0.4-0.3c-0.1-0.1-0.2-0.2-0.3-0.4c-0.1-0.1-0.1-0.3-0.1-0.5l0-19.1l-5.7,5.7C6,10.8,5.8,10.9,5.7,11 c-0.1,0.1-0.3,0.1-0.4,0.1c-0.2,0-0.3,0-0.4-0.1c-0.1-0.1-0.3-0.2-0.4-0.3c-0.1-0.1-0.1-0.2-0.2-0.4C4.1,10.2,4,10.1,4.1,9.9 c0-0.1,0-0.3,0.1-0.4c0-0.1,0.1-0.3,0.3-0.4l7.7-7.8c0.1,0,0.2-0.1,0.2-0.1c0,0,0.1-0.1,0.2-0.1c0.1,0,0.2,0,0.2-0.1 c0.1,0,0.1,0,0.2,0c0,0,0.1,0,0.2,0c0.1,0,0.2,0,0.2,0.1c0.1,0,0.1,0.1,0.2,0.1C13.7,1.2,13.8,1.2,13.8,1.3z"/></svg>
 </button>
-<script type="module" src="{prefix}assets/site.js"></script>
+<script type="module" src="{prefix}assets/site.js?v={file_version('site.js')}"></script>
 </body>
 </html>
 """
@@ -253,7 +278,8 @@ def main():
         photos_by_album[a["slug"]] = build_album(args.src, out, a)
         print(f'  {len(photos_by_album[a["slug"]])} photos')
     build_pages(site, out, photos_by_album)
-    print(f"Built site in {out}")
+    version = stamp_version(out)
+    print(f"Built site in {out} (version {version})")
 
     if args.serve:
         import functools, http.server
