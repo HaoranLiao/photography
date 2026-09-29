@@ -80,10 +80,18 @@ main { flex: 0 0 75%; min-width: 0; }
   color: var(--text); font-size: 26px; font-weight: 600; line-height: 33px;
   opacity: 0; transition: opacity .15s; pointer-events: none;
 }
+/* Under the band, a white wash fades the whole photo, including the strips above and below it. */
+.cover::after {
+  content: ""; position: absolute; inset: 0; z-index: 1; background: #fff;
+  opacity: 0; transition: opacity .2s; pointer-events: none;
+}
+.cover-title { z-index: 2; }
 @media (hover: hover) {
   .cover:hover .cover-title { opacity: 1; }
+  .cover:hover::after { opacity: .85; }
 }
 .cover:focus-visible .cover-title { opacity: 1; }
+.cover:focus-visible::after { opacity: .85; }
 
 .gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--gap); }
 .gallery a { display: block; overflow: hidden; background: #f3f3f3; cursor: zoom-in; }
