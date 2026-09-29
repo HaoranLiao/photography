@@ -218,7 +218,7 @@ def build_pages(site, out, photos_by_album):
         d = out / a["slug"]
         d.mkdir(parents=True, exist_ok=True)
         tiles = "".join(gallery_tile(a["slug"], p) for p in photos)
-        gallery = f'<div class="gallery" data-row-height="{a.get("row_height", 137)}">{tiles}</div>' if photos else \
+        gallery = f'<div class="gallery" data-row-scale="{a.get("row_scale", 1)}">{tiles}</div>' if photos else \
             f'<p class="empty">No photos yet. Add some to <code>originals/{a["slug"]}/</code> and run <code>python3 build.py</code>.</p>'
         # "You may also like": the next two albums in menu order, wrapping around.
         others = [o for o in albums if o["slug"] != a["slug"]]

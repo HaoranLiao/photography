@@ -27,59 +27,61 @@ if (document.body.hasAttribute('data-no-download')) {
   document.addEventListener('dragstart', (e) => { if (e.target.tagName === 'IMG') e.preventDefault(); });
 }
 
-// Justified gallery, same method as Adobe Portfolio's photo grid: walk through the
-// photos and keep adding to the current row while that brings the row's height
-// (when stretched to the full width) closer to the target height. Photos are never
-// cropped. The target is given in pixels for Adobe's 704px-wide column (site.json
-// "row_height") and scales with the actual width.
-// Target row height for each screen size, fitted to what Adobe Portfolio does.
-function targetRowHeight(gallery, W) {
-  const rowHeight = Number(gallery.dataset.rowHeight) || 137;  // per album, see site.json
+// Justified gallery, same method as Adobe Portfolio's photo grid: photos are added to a row
+// until one more would make the row (stretched to the full width) shorter than a minimum
+// height; that photo starts the next row. Photos are never cropped. The minimum depends on
+// the width of the photo area, fitted to Adobe's layout on phones, tablets and computers,
+// times the album's "row_scale" in site.json (bigger = fewer, larger photos per row).
+// Phones (window up to 540px wide): Adobe goes by the window width.
+const PHONE_BANDS = [  // [window width up to, minimum row height as a fraction of it]
+  [382, 0.242], [400, 0.215], [420, 0.212], [475, 0.2058], [540, 0.162],
+];
+// Tablets and computers: Adobe goes by the width of the photo area.
+const ROW_BANDS = [  // [photo-area width up to, width ÷ this = minimum row height]
+  [540, 5.9], [600, 4.45], [645, 4.63], [660, 5.36], [780, 5.9],
+  [830, 4.5], [850, 4.59], [1016, 5.9], [1106, 4.52], [Infinity, 5.9],
+];
+function minRowHeight(W, scale) {
   const vw = window.innerWidth;
-  if (vw <= 540) return 114;                                // phones
-  if (vw <= 768) return W * 0.278;                          // tablets, upright
-  if (vw <= 932) return W * 0.196 * (rowHeight / 137);      // tablets, sideways
-  return rowHeight * W / 704;                               // computers
+  if (vw <= 540) return vw * PHONE_BANDS.find(([upTo]) => vw <= upTo)[1] * scale;
+  return (W / ROW_BANDS.find(([upTo]) => W < upTo)[1]) * scale;
 }
 
 function layoutGallery(gallery) {
   const items = [...gallery.children];
-  // Exact (fractional) width, trimmed a hair so rounding can never push a photo onto the next row.
-  const W = gallery.getBoundingClientRect().width - 0.1;
+  const W = gallery.getBoundingClientRect().width;
   const gap = parseFloat(getComputedStyle(gallery).columnGap) || 0;
   const ratios = items.map((a) => a.dataset.pswpWidth / a.dataset.pswpHeight);
-  const target = targetRowHeight(gallery, W);
+  const minH = minRowHeight(W, Number(gallery.dataset.rowScale) || 1);
   const heightOf = (row) => (W - gap * (row.length - 1)) / row.reduce((sum, x) => sum + ratios[x], 0);
 
   const rows = [];
   let row = [];
   ratios.forEach((_, x) => {
-    if (row.length && Math.abs(heightOf([...row, x]) - target) > Math.abs(heightOf(row) - target)) {
+    if (row.length && heightOf([...row, x]) < minH) {
       rows.push(row);
       row = [];
     }
     row.push(x);
   });
   rows.push(row);
-  // Don't leave a single photo alone on the last row: re-split the last two rows as evenly as possible.
-  if (rows.length > 1 && row.length === 1) {
-    const both = [...rows[rows.length - 2], ...row];
-    let best = 1;
-    const miss = (k) => Math.abs(heightOf(both.slice(0, k)) - target) + Math.abs(heightOf(both.slice(k)) - target);
-    for (let k = 2; k < both.length; k++) if (miss(k) < miss(best)) best = k;
-    rows.splice(-2, 2, both.slice(0, best), both.slice(best));
-  }
 
   gallery.classList.add('justified');
   rows.forEach((r, i) => {
-    let h = heightOf(r);
-    // A short last row would blow up to a huge height; keep it at the target instead.
-    if (i === rows.length - 1 && rows.length > 1 && h > target * 2) h = target;
+    const total = r.reduce((sum, x) => sum + ratios[x], 0);
+    const gaps = gap * (r.length - 1);
+    // A short last row would blow up to a huge height; keep it modest instead of full width.
+    const capped = i === rows.length - 1 && rows.length > 1 && heightOf(r) > minH * 3;
     for (const x of r) {
-      const w = Math.floor(ratios[x] * h * 100) / 100;
-      items[x].style.width = `${w}px`;
-      items[x].style.height = `${h}px`;
-      items[x].querySelector('img').sizes = `${Math.ceil(w)}px`;
+      // Widths are shares of the row (not fixed pixels), so a row always fits, even if the
+      // page width changes a little (e.g. a scrollbar appears) before the next layout pass.
+      // The 0.5px keeps sub-pixel rounding from ever pushing the last photo to the next line.
+      items[x].style.width = capped
+        ? `${ratios[x] * minH * 1.5}px`
+        : `calc((100% - ${gaps + 0.5}px) * ${ratios[x] / total})`;
+      items[x].style.height = '';
+      items[x].style.aspectRatio = `${ratios[x]}`;
+      items[x].querySelector('img').sizes = `${Math.ceil((W - gaps) * ratios[x] / total)}px`;
     }
   });
 }
