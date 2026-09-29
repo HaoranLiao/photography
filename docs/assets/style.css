@@ -95,8 +95,7 @@ main { flex: 0 0 75%; min-width: 0; }
 
 .gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--gap); }
 .gallery a { display: block; overflow: hidden; background: #f3f3f3; cursor: zoom-in; }
-.gallery img { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; transition: opacity .3s, transform .6s; }
-.gallery a:hover img { opacity: .88; }
+.gallery img { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; }  /* no hover effect, just the zoom cursor (as on Adobe) */
 /* Set by site.js: rows of uncropped photos sharing one height, like Adobe Portfolio. */
 .gallery.justified { display: flex; flex-wrap: wrap; }
 .gallery.justified a { flex: none; }
