@@ -61,18 +61,23 @@ if (document.body.hasAttribute('data-no-download')) {
 const PHONE_BANDS = [  // [window width up to, minimum row height as a share of the photo width]
   [382, 0.242], [405, 0.228], [420, 0.2174], [475, 0.2128], [Infinity, 0.165],
 ];
-// Tablets and computers: Adobe goes by the width of the photo area.
-const ROW_BANDS = [  // [photo-area width up to, width ÷ this = minimum row height]
-  [540, 5.9], [600, 4.45], [645, 4.63], [660, 5.36], [780, 5.9],
-  [830, 4.5], [850, 4.59], [1016, 5.9], [1106, 4.52], [Infinity, 5.9],
+// Tablets (menu-button header, window up to 932px) and computers (sidebar) go by the width of
+// the photo area, with different bands for the two layouts.
+const TABLET_BANDS = [  // [photo-area width up to, width ÷ this = minimum row height]
+  [600, 4.45], [645, 4.63], [780, 5.9], [840, 4.5905], [862, 4.52], [Infinity, 5.9],
+];
+const DESKTOP_BANDS = [
+  [648, 4.63], [656, 5.362], [665, 4.625], [780, 5.9], [783, 4.6], [850, 4.52],
+  [1016, 5.9], [1106, 4.52], [Infinity, 5.9],
 ];
 function minRowHeight(W, scale) {
+  const vw = window.innerWidth;
   if (W < 540) {
     // On phones Adobe shows Landscape like Travel, so only enlarging scales (Night) apply here.
-    const vw = window.innerWidth;
     return W * PHONE_BANDS.find(([upTo]) => vw <= upTo)[1] * Math.max(scale, 1);
   }
-  return (W / ROW_BANDS.find(([upTo]) => W < upTo)[1]) * scale;
+  const bands = vw <= 932 ? TABLET_BANDS : DESKTOP_BANDS;
+  return (W / bands.find(([upTo]) => W < upTo)[1]) * scale;
 }
 
 function layoutGallery(gallery) {
