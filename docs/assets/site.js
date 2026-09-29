@@ -23,7 +23,7 @@ document.querySelector('.back-to-top').addEventListener('click', () => window.sc
 
 // Discourage right-click saving (as on the old site). Determined visitors can still save images.
 if (document.body.hasAttribute('data-no-download')) {
-  document.addEventListener('contextmenu', (e) => { if (e.target.closest('img, .pswp')) e.preventDefault(); });
+  document.addEventListener('contextmenu', (e) => { if (e.target.closest('img, .lb')) e.preventDefault(); });
   document.addEventListener('dragstart', (e) => { if (e.target.tagName === 'IMG') e.preventDefault(); });
 }
 
@@ -93,35 +93,129 @@ for (const gallery of document.querySelectorAll('.gallery')) {
   }).observe(gallery);
 }
 
-// Lightbox
-if (document.querySelector('.gallery')) {
-  const base = 'https://cdn.jsdelivr.net/npm/photoswipe@5.4.4/dist';
-  const { default: PhotoSwipeLightbox } = await import(`${base}/photoswipe-lightbox.esm.min.js`);
-  const lightbox = new PhotoSwipeLightbox({
-    gallery: '.gallery',
-    children: 'a',
-    pswpModule: () => import(`${base}/photoswipe.esm.min.js`),
-    // Like Adobe Portfolio: near-opaque white backdrop, photo edge to edge, no counter or zoom.
-    bgOpacity: 0.94,
-    showHideAnimationType: 'fade',
-    padding: { top: 0, bottom: 0, left: 0, right: 0 },
-    counter: false,
-    zoom: false,
-    imageClickAction: 'next',
-    tapAction: 'toggle-controls',  // phones: tap shows/hides the close button; swipe to move, swipe down to close
-  });
-  // Arrows and close button appear while the mouse moves, then fade out.
-  lightbox.on('afterInit', () => {
-    const el = lightbox.pswp.element;
-    let timer;
-    const wake = () => {
-      el.classList.remove('pswp--idle');
-      clearTimeout(timer);
-      timer = setTimeout(() => el.classList.add('pswp--idle'), 2000);
+// Full-screen viewer, modelled on Adobe Portfolio's: near-white backdrop, the photo as large
+// as fits, photos crossfade (0.4s), round arrows appear while the mouse is over the left or
+// right 30% of the screen, and the arrows wrap around from the last photo to the first.
+// Keyboard: left/right arrows and Esc. Phones: tap the sides or swipe; swipe down to close.
+const ARROW_PREV = 'M36.8,36.4L30.3,30l6.5-6.4l-3.5-3.4l-10,9.8l10,9.8L36.8,36.4z';
+const ARROW_NEXT = 'M24.2,23.5l6.6,6.5l-6.6,6.5l3.6,3.5L37.8,30l-10.1-9.9L24.2,23.5z';
+const arrow = (d) => `<svg width="60" height="60" viewBox="0 0 60 60" aria-hidden="true"><circle class="lb-icon-bg" cx="30" cy="30" r="30"/><path class="lb-icon" d="${d}"/></svg>`;
+
+function setupViewer(gallery) {
+  const links = [...gallery.querySelectorAll('a')];
+  const box = document.createElement('div');
+  box.className = 'lb';
+  box.setAttribute('role', 'dialog');
+  box.setAttribute('aria-modal', 'true');
+  box.setAttribute('aria-label', 'Photo viewer');
+  box.innerHTML = `<div class="lb-stage"></div>
+    <button class="lb-prev" aria-label="Previous photo">${arrow(ARROW_PREV)}</button>
+    <button class="lb-next" aria-label="Next photo">${arrow(ARROW_NEXT)}</button>
+    <button class="lb-close" aria-label="Close"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="lb-icon-bg" cx="50" cy="50" r="47.5"/><polygon points="64.5,39.8 60.2,35.5 50,45.7 39.8,35.5 35.5,39.8 45.7,50 35.5,60.2 39.8,64.5 50,54.3 60.2,64.5 64.5,60.2 54.3,50"/></svg></button>`;
+  document.body.append(box);
+  const stage = box.querySelector('.lb-stage');
+  let index = -1;
+  let current = null;
+  let idleTimer;
+  let returnFocus = null;
+
+  const wrap = (i) => (i + links.length) % links.length;
+  const preload = (i) => { new Image().src = links[wrap(i)].href; };
+
+  function show(i) {
+    i = wrap(i);
+    if (i === index) return;
+    index = i;
+    const img = new Image();
+    img.className = 'lb-img';
+    img.alt = links[i].querySelector('img')?.alt || '';
+    img.draggable = false;
+    img.src = links[i].href;
+    stage.append(img);
+    const previous = current;
+    current = img;
+    // Crossfade: once the new photo is ready, fade it in while the previous one fades out.
+    const reveal = () => {
+      if (current !== img) { img.remove(); return; }  // already moved on to another photo
+      requestAnimationFrame(() => {
+        img.classList.add('lb-visible');
+        previous?.classList.remove('lb-visible');
+        if (previous) setTimeout(() => previous.remove(), 450);
+      });
     };
-    if (!matchMedia('(hover: hover)').matches) return;  // touch screens use tap-to-toggle instead
-    el.classList.add('pswp--idle');
-    el.addEventListener('pointermove', wake);
+    if (img.complete) {
+      reveal();
+    } else {
+      img.addEventListener('load', reveal, { once: true });
+      img.addEventListener('error', reveal, { once: true });
+    }
+    preload(i + 1);
+    preload(i - 1);
+  }
+
+  // Controls fade out after 2s without mouse movement (touch screens keep the close button).
+  const wake = () => {
+    box.classList.remove('lb-idle');
+    clearTimeout(idleTimer);
+    if (matchMedia('(hover: hover)').matches) idleTimer = setTimeout(() => box.classList.add('lb-idle'), 2000);
+  };
+
+  function open(i) {
+    returnFocus = document.activeElement;
+    stage.replaceChildren();
+    current = null;
+    index = -1;
+    show(i);
+    document.documentElement.classList.add('lb-lock');
+    box.classList.add('lb-open');
+    wake();
+    box.querySelector('.lb-close').focus({ preventScroll: true });
+  }
+
+  function close() {
+    box.classList.remove('lb-open');
+    document.documentElement.classList.remove('lb-lock');
+    clearTimeout(idleTimer);
+    setTimeout(() => { if (!box.classList.contains('lb-open')) stage.replaceChildren(); }, 300);
+    returnFocus?.focus({ preventScroll: true });
+  }
+
+  gallery.addEventListener('click', (e) => {
+    const link = e.target.closest('a');
+    if (!link || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    e.preventDefault();
+    open(links.indexOf(link));
   });
-  lightbox.init();
+  box.querySelector('.lb-prev').addEventListener('click', () => show(index - 1));
+  box.querySelector('.lb-next').addEventListener('click', () => show(index + 1));
+  box.querySelector('.lb-close').addEventListener('click', close);
+  box.addEventListener('mousemove', wake);
+  document.addEventListener('keydown', (e) => {
+    if (!box.classList.contains('lb-open')) return;
+    if (e.key === 'ArrowLeft') show(index - 1);
+    else if (e.key === 'ArrowRight') show(index + 1);
+    else if (e.key === 'Escape') close();
+    else return;
+    e.preventDefault();
+    wake();
+  });
+
+  // Swipe on touch screens.
+  let startX = null;
+  let startY = null;
+  box.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) { startX = null; return; }
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+  box.addEventListener('touchend', (e) => {
+    if (startX === null) return;
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    startX = null;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) show(index + (dx < 0 ? 1 : -1));
+    else if (dy > 80 && dy > Math.abs(dx)) close();
+  });
 }
+
+document.querySelectorAll('.gallery').forEach(setupViewer);

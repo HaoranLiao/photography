@@ -21,11 +21,10 @@ from PIL import Image, ImageOps
 ROOT = Path(__file__).resolve().parent
 PHOTO_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".tif", ".tiff"}
 
-FULL_LONG_EDGE = 2400      # lightbox image
+FULL_LONG_EDGE = 2400      # full-screen viewer image
 THUMB_LONG_EDGE = 1000    # album grid preview (uncropped)
 COVER_SIZE = (1200, 676)   # home page album cover, ~16:9
 ACTIVE = ' class="active"'
-PHOTOSWIPE = "https://cdn.jsdelivr.net/npm/photoswipe@5.4.4/dist"
 
 
 def natural_key(p):
@@ -119,7 +118,7 @@ def social_links(site, prefix):
     return f'<div class="social">{"".join(items)}</div>' if items else ""
 
 
-def page(site, *, title, prefix, active, body, lightbox=False):
+def page(site, *, title, prefix, active, body):
     albums = site["albums"]
     nav_items = "".join(
         f'<li><a href="{prefix}{a["slug"]}/"{ACTIVE if active == a["slug"] else ""}>{esc(a["title"])}</a></li>'
@@ -127,7 +126,6 @@ def page(site, *, title, prefix, active, body, lightbox=False):
     )
     work_active = active != "work"  # grey on the home page only, as on Adobe
     full_title = site["name"] if title is None else f'{site["name"]} - {title}'
-    pswp_css = f'<link rel="stylesheet" href="{PHOTOSWIPE}/photoswipe.css">' if lightbox else ""
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -137,7 +135,6 @@ def page(site, *, title, prefix, active, body, lightbox=False):
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rosario:wght@300..700&display=swap">
-{pswp_css}
 <link rel="stylesheet" href="{prefix}assets/style.css">
 </head>
 <body{' data-no-download' if site.get("disable_right_click") else ''}>
@@ -211,7 +208,7 @@ def build_pages(site, out, photos_by_album):
         more = (f'<section class="more"><h3>You may also like</h3>{cover_grid(others, "../", "covers")}</section>'
                 if others else "")
         (d / "index.html").write_text(page(
-            site, title=a["title"], prefix="../", active=a["slug"], body=gallery + more, lightbox=True))
+            site, title=a["title"], prefix="../", active=a["slug"], body=gallery + more))
 
 
 def main():

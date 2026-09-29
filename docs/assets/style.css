@@ -120,18 +120,49 @@ footer { min-height: 172px; }
 }
 .back-to-top:hover { color: var(--text); }
 
-/* ---------- lightbox (PhotoSwipe) on white, like the original ---------- */
-.pswp {
-  --pswp-bg: #fff;
-  --pswp-placeholder-bg: #f3f3f3;
-  --pswp-icon-color: #444;
-  --pswp-icon-color-secondary: #fff;
-  --pswp-icon-stroke-color: #fff;
-  --pswp-icon-stroke-width: 1px;
-  --pswp-preloader-color: rgba(0, 0, 0, .2);
+/* ---------- full-screen viewer (as on Adobe Portfolio) ---------- */
+html.lb-lock, html.lb-lock body { overflow: hidden; }
+.lb {
+  position: fixed; inset: 0; z-index: 1000; background: rgba(255, 255, 255, .94);
+  opacity: 0; visibility: hidden; transition: opacity .25s, visibility .25s;
 }
-.pswp__button { transition: opacity .3s; }
-.pswp--idle .pswp__button { opacity: 0; }
+.lb.lb-open { opacity: 1; visibility: visible; }
+.lb-stage { position: absolute; inset: 0; }
+.lb-img {
+  position: absolute; inset: 0; margin: auto;
+  max-width: 100vw; max-height: 100vh; max-height: 100dvh;
+  opacity: 0; transition: opacity .4s; user-select: none; -webkit-user-select: none;
+}
+.lb-img.lb-visible { opacity: 1; }
+.lb button {
+  position: absolute; z-index: 1; padding: 0; border: 0; background: none; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.lb button:focus { outline: none; }
+.lb button:focus-visible svg { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 50%; }
+/* Arrows: invisible hover zones over the left/right 30% of the screen, each with a round button. */
+.lb-prev, .lb-next { top: 0; width: 30vw; height: 100%; opacity: 0; }
+.lb-prev { left: 0; }
+.lb-next { right: 0; }
+.lb-prev svg, .lb-next svg { position: absolute; top: calc(50% - 30px); }
+.lb-prev svg { left: 20px; }
+.lb-next svg { right: 20px; }
+.lb-icon-bg { fill: #696969; opacity: .2; }
+.lb svg:hover .lb-icon-bg { opacity: .4; }
+.lb-icon { fill: #fff; }
+.lb-close { top: 20px; right: 20px; width: 40px; height: 40px; }
+.lb-close svg { display: block; width: 40px; height: 40px; }
+.lb-close .lb-icon-bg { fill: #fff; }
+.lb-close polygon { fill: #000; }
+@media (hover: hover) and (min-width: 1025px) {
+  .lb-prev:hover, .lb-next:hover, .lb-prev:focus-visible, .lb-next:focus-visible { opacity: 1; }
+}
+/* No mouse movement for a while: controls fade out (the arrows can't be shown by hovering either). */
+.lb.lb-idle .lb-close, .lb.lb-idle .lb-prev, .lb.lb-idle .lb-next { opacity: 0; transition: opacity 1s; }
+@media (max-width: 1024px) {
+  .lb-close { top: 0; right: 0; }
+  .lb-close circle { display: none; }
+}
 
 /* ---------- smaller screens ---------- */
 /* Tablets and phones (up to 932px, Adobe's breakpoint): header bar with a menu button,
