@@ -10,7 +10,6 @@ re-processed, and photos you delete from originals/ are removed from docs/.
 """
 
 import argparse
-import hashlib
 import html
 import json
 import re
@@ -120,11 +119,6 @@ def social_links(site, prefix):
     return f'<div class="social">{"".join(items)}</div>' if items else ""
 
 
-def asset_version(name):
-    """Short hash of a file in static/: changes whenever the file does, so browsers fetch the new copy."""
-    return hashlib.sha1((ROOT / "static" / name).read_bytes()).hexdigest()[:8]
-
-
 def page(site, *, title, prefix, active, body, lightbox=False):
     albums = site["albums"]
     nav_items = "".join(
@@ -144,7 +138,7 @@ def page(site, *, title, prefix, active, body, lightbox=False):
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rosario:wght@300..700&display=swap">
 {pswp_css}
-<link rel="stylesheet" href="{prefix}assets/style.css?v={asset_version('style.css')}">
+<link rel="stylesheet" href="{prefix}assets/style.css">
 </head>
 <body{' data-no-download' if site.get("disable_right_click") else ''}>
 <div class="site">
@@ -165,7 +159,7 @@ def page(site, *, title, prefix, active, body, lightbox=False):
 <button class="back-to-top" aria-label="Back to top">
   <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20V4M5 11l7-7 7 7"/></svg>
 </button>
-<script type="module" src="{prefix}assets/site.js?v={asset_version('site.js')}"></script>
+<script type="module" src="{prefix}assets/site.js"></script>
 </body>
 </html>
 """
