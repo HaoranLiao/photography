@@ -1,8 +1,3 @@
-# Full-resolution originals stay on your Mac; only the resized copies in docs/ are published.
-originals/*
-!originals/*/
-originals/*/*
-!originals/*/.keep
 .DS_Store
 __pycache__/
 .claude/
