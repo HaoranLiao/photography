@@ -32,9 +32,10 @@ if (document.body.hasAttribute('data-no-download')) {
 // height; that photo starts the next row. Photos are never cropped. The minimum depends on
 // the width of the photo area, fitted to Adobe's layout on phones, tablets and computers,
 // times the album's "row_scale" in site.json (bigger = fewer, larger photos per row).
-// Phones (window up to 540px wide): Adobe goes by the window width.
-const PHONE_BANDS = [  // [window width up to, minimum row height as a fraction of it]
-  [382, 0.242], [400, 0.215], [420, 0.212], [475, 0.2058], [540, 0.162],
+// Phones (photo area under 540px): the minimum is a share of the photo-area width, and the
+// share steps with the window width. Measured on Adobe at iPhone widths 360-440px.
+const PHONE_BANDS = [  // [window width up to, minimum row height as a share of the photo width]
+  [382, 0.242], [405, 0.228], [420, 0.2174], [475, 0.2128], [Infinity, 0.165],
 ];
 // Tablets and computers: Adobe goes by the width of the photo area.
 const ROW_BANDS = [  // [photo-area width up to, width ÷ this = minimum row height]
@@ -42,8 +43,11 @@ const ROW_BANDS = [  // [photo-area width up to, width ÷ this = minimum row hei
   [830, 4.5], [850, 4.59], [1016, 5.9], [1106, 4.52], [Infinity, 5.9],
 ];
 function minRowHeight(W, scale) {
-  const vw = window.innerWidth;
-  if (vw <= 540) return vw * PHONE_BANDS.find(([upTo]) => vw <= upTo)[1] * scale;
+  if (W < 540) {
+    // On phones Adobe shows Landscape like Travel, so only enlarging scales (Night) apply here.
+    const vw = window.innerWidth;
+    return W * PHONE_BANDS.find(([upTo]) => vw <= upTo)[1] * Math.max(scale, 1);
+  }
   return (W / ROW_BANDS.find(([upTo]) => W < upTo)[1]) * scale;
 }
 
